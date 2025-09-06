@@ -18,7 +18,7 @@
 
 ## Установка
 
-1. Скачайте последнюю версию с раздела [Releases](https://github.com/Dimasick-git/Ryazhenkabestcfw-Tuner/release/Ryazhenkabestcfw_Tuner).  
+1. Скачайте последнюю версию с раздела realese.
 2. Распакуйте содержимое в папку `/switch/.packages/Ryazhenkabestcfw Tuner/`.  
 3. Запустите тюнер из меню и настройте профили по желанию.  
 4. Для обновления используйте автообновление или замените файлы вручную.  
@@ -38,7 +38,7 @@
 ## Поддержка и обратная связь
 
 Telegram группа: [t.me/Ryazhenkabestcfw](https://t.me/Ryazhenkabestcfw)  
-GitHub Issues: [GitHub Issues](https://github.com/Dimasick-git/Ryazhenka/issues)
+GitHub Issues: [GitHub Issues](https://github.com/Dimasick-git/Dimasick-git/issues)
 
 ---
 
