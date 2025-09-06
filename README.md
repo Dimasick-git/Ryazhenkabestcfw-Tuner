@@ -38,8 +38,6 @@
 ## Поддержка и обратная связь
 
 Telegram группа: [t.me/Ryazhenkabestcfw](https://t.me/Ryazhenkabestcfw)  
-GitHub Issues: [GitHub Issues](https://github.com/Dimasick-git/Dimasick-git/issues)
-
 ---
 
 ## Лицензия
