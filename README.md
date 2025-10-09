@@ -5,7 +5,6 @@
   <img src="https://img.shields.io/badge/CFW-Atmosphere-red?logo=github&logoColor=white" alt="CFW">
   <img src="https://img.shields.io/github/downloads/Dimasick-git/Ryazhenkabestcfw-Tuner/total?color=green" alt="Downloads">
   <img src="https://img.shields.io/github/release/Dimasick-git/Ryazhenkabestcfw-Tuner?color=blue" alt="Release">
-  <img src="https://img.shields.io/github/license/Dimasick-git/Ryazhenkabestcfw-Tuner?color=purple" alt="License">
 </div>
 
 ---
@@ -61,7 +60,7 @@
 ### 🔥 Основные возможности | Core Features:
 
 #### 🎮 Настройка производительности | Performance Tuning
-- 🧠 **CPU Tuning**: Частота от 816MHz до 1785MHz
+- 🧠 **CPU Tuning**: Частота от 816MHz до 2601MHz
 - 🎨 **GPU Scaling**: Динамическое масштабирование графики
 - 💾 **RAM Optimization**: Оптимизация памяти для разных режимов
 - ⚙️ **Custom Profiles**: Персональные профили для каждой игры
