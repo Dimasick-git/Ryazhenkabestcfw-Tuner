@@ -1,0 +1,162 @@
+name: Build and release when config version changes on main
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/config.ini'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**/config.ini'
+
+jobs:
+  detect-version-change:
+    name: Detect changed version in config.ini
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check.outputs.version_changed }}
+      new_version: ${{ steps.check.outputs.new_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for version key changes
+        id: check
+        run: |
+          set -euo pipefail
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+          echo "Before: $BEFORE"
+          echo "After: $AFTER"
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "No previous commit (new branch); treating as version changed"
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            echo "new_version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          MODIFIED=$(git diff --name-only "$BEFORE" "$AFTER" -- "**/config.ini" || true)
+          echo "Modified config.ini files:\n$MODIFIED"
+
+          VERSION_CHANGED=false
+          NEW_VERSION=""
+          for f in $MODIFIED; do
+            # get new version
+            if [ -f "$f" ]; then
+              new=$(grep -Ei '^[[:space:]]*(version|current)[[:space:]]*=' "$f" | head -n1 | sed -E 's/^[^=]*=[[:space:]]*//;s/[[:space:]]*$//') || true
+            else
+              new=""
+            fi
+            # get old file content and version
+            old_raw=$(git show "$BEFORE":"$f" 2>/dev/null || true)
+            if [ -n "$old_raw" ]; then
+              oldv=$(echo "$old_raw" | grep -Ei '^[[:space:]]*(version|current)[[:space:]]*=' | head -n1 | sed -E 's/^[^=]*=[[:space:]]*//;s/[[:space:]]*$//') || true
+            else
+              oldv=""
+            fi
+            echo "File: $f -> old='$oldv' new='$new'"
+            if [ "$oldv" != "$new" ]; then
+              VERSION_CHANGED=true
+              NEW_VERSION="$new"
+              break
+            fi
+          done
+
+          # export outputs
+          echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build artifacts
+    needs: detect-version-change
+    if: needs.detect-version-change.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create zip artifacts of atmosphere/config/switch
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          files=()
+          for d in atmosphere config switch; do
+            if [ -d "$d" ]; then
+              files+=("$d")
+            else
+              echo "Directory $d not found, skipping"
+            fi
+          done
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No directories found to archive" >&2
+            exit 1
+          fi
+          zipfile="artifacts/Ryazhenkabestcfw_Tuner.zip"
+          rm -f "$zipfile"
+          echo "Creating single zip: $zipfile"
+          zip -r "$zipfile" "${files[@]}" >/dev/null
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: artifacts
+
+      - name: Create or update Release and upload assets
+        if: ${{ needs.detect-version-change.outputs.new_version != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.detect-version-change.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          TAG="v${VERSION}"
+          RELEASE_NAME="Release ${VERSION}"
+          RELEASE_BODY="Automated release for version ${VERSION}"
+
+          echo "Checking for existing release with tag $TAG"
+          EXISTING=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${REPO}/releases/tags/${TAG}" || true)
+
+          UPLOAD_URL_BASE=""
+          if echo "$EXISTING" | jq -e '.id' >/dev/null 2>&1; then
+            echo "Release exists — will upload assets to existing release"
+            UPLOAD_URL=$(echo "$EXISTING" | jq -r .upload_url)
+            UPLOAD_URL_BASE=${UPLOAD_URL%\{*}
+            RELEASE_ID=$(echo "$EXISTING" | jq -r .id)
+            # Optionally update body
+            curl -s -X PATCH -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${REPO}/releases/${RELEASE_ID}" \
+              -d "{\"body\":\"${RELEASE_BODY}\"}" >/dev/null || true
+          else
+            echo "Release not found — creating new release $TAG"
+            CREATE_OUT=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${REPO}/releases" \
+              -d "{\"tag_name\":\"${TAG}\",\"name\":\"${RELEASE_NAME}\",\"body\":\"${RELEASE_BODY}\",\"prerelease\":false}")
+            UPLOAD_URL=$(echo "$CREATE_OUT" | jq -r .upload_url)
+            if [ -z "$UPLOAD_URL" ] || [ "$UPLOAD_URL" = "null" ]; then
+              echo "Failed to create release:" >&2
+              echo "$CREATE_OUT" >&2
+              exit 1
+            fi
+            UPLOAD_URL_BASE=${UPLOAD_URL%\{*}
+          fi
+
+          echo "Uploading artifacts to release"
+          for f in artifacts/*; do
+            if [ -f "$f" ]; then
+              name=$(basename "$f")
+              echo " - Uploading $name"
+              # delete existing asset with same name (if any)
+              ASSETS=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${REPO}/releases/tags/${TAG}" || true)
+              ASSET_ID=$(echo "$ASSETS" | jq -r --arg NAME "$name" '.assets[] | select(.name==$NAME) | .id' 2>/dev/null || true)
+              if [ -n "$ASSET_ID" ] && [ "$ASSET_ID" != "null" ]; then
+                echo "   Deleting existing asset id $ASSET_ID"
+                curl -s -X DELETE -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${REPO}/releases/assets/${ASSET_ID}" || true
+              fi
+              curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/zip" --data-binary @"$f" "${UPLOAD_URL_BASE}?name=${name}" | jq -r '.browser_download_url'
+            fi
+          done
+
