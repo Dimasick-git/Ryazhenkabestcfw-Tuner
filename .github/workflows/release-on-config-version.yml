@@ -21,12 +21,12 @@ jobs:
         run: |
           set -e
           # Read new version from the repo (working tree)
-          new_version=$(grep -Po '^current=\K.*' "Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | tr -d '\r' || true)
+          new_version=$(grep -Po '^current=\\K.*' "Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | tr -d '\\r' || true)
           # Read previous version from the commit before this push (if available)
           if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
             prev_version=""
           else
-            prev_version=$(git show "${{ github.event.before }}:Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | grep -Po '^current=\K.*' 2>/dev/null | tr -d '\r' || true)
+            prev_version=$(git show "${{ github.event.before }}:Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | grep -Po '^current=\\K.*' 2>/dev/null | tr -d '\\r' || true)
           fi
           echo "prev_version=$prev_version" >> $GITHUB_OUTPUT
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
@@ -36,17 +36,46 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Package release artifact
+      - name: Collect changed files
+        if: steps.versions.outputs.changed == 'true'
+        id: changed_files
+        run: |
+          set -e
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            files=""
+          else
+            files=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
+          fi
+          # Save multiline output
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$files" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Package release artifact (atmosphere, config, switch)
         if: steps.versions.outputs.changed == 'true'
         id: package
         run: |
           set -e
           version=${{ steps.versions.outputs.new_version }}
-          zip_name="ryazhenka-tuner-v${version}.zip"
-          # Create a portable zip of the package directory
-          rm -f "$zip_name"
-          zip -r "$zip_name" "Ryazhenkabestcfw Tuner" -x "**/.git/**" || true
+          zip_name="Ryazhenkabestcfw_Tuner_v${version}.zip"
+          zip_name_unversioned="Ryazhenkabestcfw_Tuner.zip"
+          rm -f "$zip_name" "$zip_name_unversioned"
+          # Pack only existing relevant directories
+          paths=""
+          [ -d "atmosphere" ] && paths="$paths atmosphere"
+          [ -d "config" ] && paths="$paths config"
+          [ -d "switch" ] && paths="$paths switch"
+          if [ -z "$paths" ]; then
+            echo "No paths found to package" >&2
+            touch "$zip_name"
+          else
+            zip -r "$zip_name" $paths -x "**/.git/**" || true
+          fi
+          # Also create an unversioned copy
+          cp "$zip_name" "$zip_name_unversioned" || true
           echo "zip=$zip_name" >> $GITHUB_OUTPUT
+          echo "zip_unversioned=$zip_name_unversioned" >> $GITHUB_OUTPUT
+          echo "files=$zip_name,$zip_name_unversioned" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release and upload artifact
         if: steps.versions.outputs.changed == 'true'
@@ -54,7 +83,13 @@ jobs:
         with:
           tag_name: v${{ steps.versions.outputs.new_version }}
           name: "Ryazhenka Tuner v${{ steps.versions.outputs.new_version }}"
-          body: "Automatic release created because config.ini version changed: ${{ steps.versions.outputs.prev_version }} → ${{ steps.versions.outputs.new_version }}"
-          files: ${{ steps.package.outputs.zip }}
+          body: |
+            Automatic release created because config.ini version changed: ${{ steps.versions.outputs.prev_version }} → ${{ steps.versions.outputs.new_version }}
+
+            Changed files:
+            ${{ steps.changed_files.outputs.files }}
+
+            Packaged paths: atmosphere, config, switch (if present)
+          files: ${{ steps.package.outputs.files }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
