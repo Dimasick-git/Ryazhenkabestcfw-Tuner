@@ -1,0 +1,126 @@
+;color=#16A085
+;show_widget=true
+
+
+
+[@Системная информация]
+
+[Gap]
+;mode=table
+;background=false
+;gap=10
+
+[Header]
+;mode=table
+;background=false
+;header_indent=true
+;polling=true
+;info_text_color=#AAAAAA
+;gap=17
+'Полная системная информация' = '{DRIGHT}'
+
+[Gap]
+;mode=table
+;background=false
+;gap=10
+
+[Header]
+;mode=table
+;spacing=4
+'ИНФОРМАЦИЯ ОС' = ''
+
+[Info]
+;mode=table
+;background=false
+;header_indent=true
+;gap=17
+'Версия HOS' = '{hos_version}'
+'Atmosphere' = '{ams_version}'
+'Производитель' = 'Nintendo'
+
+[Gap]
+;mode=table
+;background=false
+;gap=10
+
+[Header]
+;mode=table
+;spacing=4
+'ЖЕЛЕЗО КОНСОЛИ' = ''
+
+[Info]
+;mode=table
+;background=false
+;spacing=4
+'CPU Speedo' = '{cpu_speedo}'
+'GPU Speedo' = '{gpu_speedo}'
+'DRAM ID' = '{dram_id}'
+'Модель консоли' = 'Определяется автоматически'
+
+[Gap]
+;mode=table
+;background=false
+;gap=10
+
+[Header]
+;mode=table
+;spacing=4
+'СТАТУС МОДИФИКАЦИЙ' = ''
+
+[Info]
+;mode=table
+;background=false
+;spacing=4
+hex_file '/atmosphere/kips/loader.kip'
+'OC Loader' = 'Установлен и активен'
+'Sys-clk' = 'Доступен'
+'Status Monitor' = 'Рекомендуется установить'
+'Конфиги Atmos' = '/atmosphere/config/'
+
+[Gap]
+;mode=table
+;background=false
+;gap=15
+
+[Header]
+;mode=table
+;spacing=4
+'ПАРАМЕТРЫ ТЮНЕРА' = ''
+
+[Info]
+;mode=table
+;background=false
+;spacing=4
+'Версия Tuner' = '10.2'
+'Разработчик' = 'Dimasick-git'
+'Основано на' = 'OC-Toolkit от halop'
+'Язык интерфейса' = 'Русский'
+
+[Gap]
+;mode=table
+;background=false
+;gap=15
+
+[Header]
+;mode=table
+;spacing=4
+'ПОЛЕЗНЫЕ ССЫЛКИ' = ''
+
+[Info]
+;mode=table
+;background=false
+;spacing=4
+'GitHub Ryazhenka' = 'github.com/Dimasick-git'
+'GitHub OC-Toolkit' = 'github.com/halop/OC_Toolkit'
+'Документация' = 'Встроенная справка в тюнере'
+
+[Gap]
+;mode=table
+;background=false
+;gap=15
+
+[Footer]
+;mode=table
+;color=#AAAAAA
+'Ryazhenka BEST CFW 2025' = ''
+'| Системная информация' = ''

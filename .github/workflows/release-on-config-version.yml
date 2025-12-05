@@ -1,0 +1,60 @@
+name: Release on config version change
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release-on-config:
+    name: Create release when config.ini version changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine old and new versions
+        id: versions
+        run: |
+          set -e
+          # Read new version from the repo (working tree)
+          new_version=$(grep -Po '^current=\K.*' "Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | tr -d '\r' || true)
+          # Read previous version from the commit before this push (if available)
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            prev_version=""
+          else
+            prev_version=$(git show "${{ github.event.before }}:Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | grep -Po '^current=\K.*' 2>/dev/null | tr -d '\r' || true)
+          fi
+          echo "prev_version=$prev_version" >> $GITHUB_OUTPUT
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          if [ "$prev_version" != "$new_version" ] && [ -n "$new_version" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Package release artifact
+        if: steps.versions.outputs.changed == 'true'
+        id: package
+        run: |
+          set -e
+          version=${{ steps.versions.outputs.new_version }}
+          zip_name="ryazhenka-tuner-v${version}.zip"
+          # Create a portable zip of the package directory
+          rm -f "$zip_name"
+          zip -r "$zip_name" "Ryazhenkabestcfw Tuner" -x "**/.git/**" || true
+          echo "zip=$zip_name" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release and upload artifact
+        if: steps.versions.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.versions.outputs.new_version }}
+          name: "Ryazhenka Tuner v${{ steps.versions.outputs.new_version }}"
+          body: "Automatic release created because config.ini version changed: ${{ steps.versions.outputs.prev_version }} → ${{ steps.versions.outputs.new_version }}"
+          files: ${{ steps.package.outputs.zip }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
