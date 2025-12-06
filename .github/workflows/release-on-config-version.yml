@@ -19,22 +19,54 @@ jobs:
       - name: Determine old and new versions
         id: versions
         run: |
-          set -e
-          # Read new version from the repo (working tree)
-          new_version=$(grep -Po '^current=\\K.*' "Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | tr -d '\\r' || true)
-          # Read previous version from the commit before this push (if available)
-          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
-            prev_version=""
-          else
-            prev_version=$(git show "${{ github.event.before }}:Ryazhenkabestcfw Tuner/config.ini" 2>/dev/null | grep -Po '^current=\\K.*' 2>/dev/null | tr -d '\\r' || true)
+          set -euo pipefail
+          # Path to the package config that contains the version
+          cfg_path="switch/.packages/Ryazhenkabestcfw Tuner/config.ini"
+
+          # helper to read 'current=' value from a file or from git at a given ref
+          read_version() {
+            local src="$1"; shift
+            grep -Po '^current=\K.*' "$src" 2>/dev/null | tr -d '\r' || true
+          }
+
+          new_version=""
+          if [ -f "$cfg_path" ]; then
+            new_version=$(read_version "$cfg_path")
           fi
+
+          prev_version=""
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            # attempt to read the file content from the previous commit
+            if git cat-file -e "${{ github.event.before }}:$cfg_path" 2>/dev/null; then
+              prev_version=$(git show "${{ github.event.before }}:$cfg_path" 2>/dev/null | grep -Po '^current=\K.*' 2>/dev/null | tr -d '\r' || true)
+            fi
+          fi
+
+          # semver compare helper: convert X.Y.Z to comparable integer
+          semver_to_num() {
+            v="$1"
+            IFS='.' read -r maj min pat <<< "${v}"
+            maj=${maj:-0}; min=${min:-0}; pat=${pat:-0}
+            printf "%06d%06d%06d" "$maj" "$min" "$pat"
+          }
+
+          changed=false
+          if [ -n "$new_version" ]; then
+            if [ -z "$prev_version" ]; then
+              # no previous version found — treat as changed
+              changed=true
+            else
+              nnum=$(semver_to_num "$new_version")
+              pnum=$(semver_to_num "$prev_version")
+              if [ "$nnum" -gt "$pnum" ]; then
+                changed=true
+              fi
+            fi
+          fi
+
           echo "prev_version=$prev_version" >> $GITHUB_OUTPUT
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
-          if [ "$prev_version" != "$new_version" ] && [ -n "$new_version" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
+          echo "changed=$changed" >> $GITHUB_OUTPUT
 
       - name: Collect changed files
         if: steps.versions.outputs.changed == 'true'
