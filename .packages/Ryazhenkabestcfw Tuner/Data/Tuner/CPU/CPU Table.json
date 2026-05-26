@@ -1,0 +1,27 @@
+[
+ {
+  "name": "Авто",
+  "label": "Авто",
+  "dec": "0"
+ },
+ {
+  "name": "Сток",
+  "label": "Сток",
+  "dec": "1"
+ },
+ {
+  "name": "Tbreak 1581",
+  "label": "Tbreak 1581",
+  "dec": "2"
+ },
+ {
+  "name": "Tbreak 1683",
+  "label": "Tbreak 1683",
+  "dec": "3"
+ },
+ {
+  "name": "Хелиос",
+  "label": "Хелиос",
+  "dec": "4"
+ }
+]
