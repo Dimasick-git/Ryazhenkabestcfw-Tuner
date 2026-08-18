@@ -2,51 +2,58 @@
 
 ## Версия 11.0.0
 
-**Ryazhenkabestcfw Tuner v11.0.0** — информационный каталог для Ryazhahand-Overlay и совместимых менеджеров пакетов Nintendo Switch. В нём нет разгона, изменения системных параметров или скрытых автоматических действий.
+**Ryazhenkabestcfw Tuner v11.0.0** возвращает структуру и визуальный стиль опубликованного v10.6: вкладки **«Ряженка»** и **«Другое»**, компактные заголовки, отступы, подменю «Обновления» и «ПО и утилиты». Это мультитул для системных настроек, overlays и homebrew, а не новый абстрактный каталог.[1]
 
-> **Весь тюнинг перенесён в Ryazha-clk начиная с версии 3.0.0.**
+> **Тюнинг перенесён в Ryazha-clk с версии 3.0.0. Лимит зарядного тока настраивается только в его overlay.**
 
-Пакет не содержит настроек CPU, GPU или RAM, профилей частот и напряжений, пресетов, Memory Kit, OC-патчей или детекторов. Тюнинговый модуль и его детектор развиваются отдельно в `Ryazha-clk`. Тюнер не содержит и не устанавливает OC-функции.
+## Что сохранено из v10.6
 
-## Каталог Ryazha
-
-Вкладка **«Каталог»** содержит проверенные установочные пункты из официальных GitHub Releases. Для каждой позиции выбран ровно один asset: ZIP с корректной структурой SD, прямой `.ovl` или прямой `.nro`.
-
-| Раздел | Компоненты |
+| Раздел | Состояние v11.0.0 |
 |---|---|
-| Базовые компоненты | Ryazhahand Overlay, Mission-Control, Ryazhenka AIO Updater |
-| Overlays | ovlSysmodules, Ryazha Status Monitor, EdiZon, ReverseNX-RT, Fizeau, FPSLocker |
-| Приложения | RyazhaAI, RyazhaTune, SwitchWave, PPSSPP |
+| Оболочка «Ряженка» / «Другое» | Восстановлена в стиле v10.6 |
+| Обновление самого тюнера | Сохранено через GitHub Releases |
+| ПО и утилиты | Сохранены разделы «Скачать», «Удалить» и «Модули Ряженка» |
+| Системные настройки | Сохранены GPU Scheduler, USB 3.0, авто-перезагрузка, FPS и битрейт видеозахвата |
+| Геймпады и эмуляторы | Сохранен отдельный раздел с Mission-Control и PPSSPP |
+| Status Monitor presets | Удалены по решению автора |
+| Лимит зарядного тока | Удалён из тюнера; перенесён в Ryazha-clk |
 
-Каждая установка использует постоянный URL вида `releases/latest/download/<asset>`. После публикации нового release тюнер автоматически скачает актуальный пакет, если workflow проекта сохраняет постоянное имя основного asset. Установочные пункты требуют удержания **A**. После установки sysmodule или полного overlay-пакета перезагрузите Switch.
+## Память и патчи
 
-## Как работает установка
+Старый локальный набор Atmosphère-патчей удалён. Вместо него встроен официальный **Memory Kit 1.0.2** от ppkantorski. Он содержит Memory Hack и настройку heap для Ultrahand; в меню есть отдельная команда обновления его ZIP из последнего официального release.[2]
 
-| Формат | Обработка в пакете |
+Для совместимых Mariko с физической памятью 8 ГБ добавлен отдельный переключатель **«Принудительные 8 ГБ RAM»**. Его payload взят из тега `23-R5` Ultra Tuner; включение сохраняет текущий `/payload.bin` в `/config/Ryazhenka/8GB/` и заменяет основной payload, `atmosphere/reboot_payload.bin` и `bootloader/update.bin`.[3]
+
+> Не включайте 8 ГБ-патч на обычной консоли с 4 ГБ RAM: это может вызвать загрузочную петлю. Пункт ограничен Mariko и не включается автоматически.
+
+## Проекты Ряженка
+
+Раздел **«ПО и утилиты → Модули Ряженка»** использует постоянные ссылки `releases/latest/download/<asset>`. После публикации следующего release соответствующий пункт получает новый package без изменения тюнера.
+
+| Категория | Компоненты |
 |---|---|
-| Корневой ZIP | Скачивается во временную папку, распаковывается в корень SD, затем удаляется. |
-| ZIP с внешней папкой | Распаковывается во временную папку; в корень SD копируются только `switch/` и `config/`. |
-| `.ovl` | Скачивается напрямую в `/switch/.overlays/`. |
-| `.nro` | Скачивается напрямую в нужную папку `/switch/`. |
+| Overlays и система | Ryazhahand Overlay, ovlSysmodules, Ryazha Status Monitor, EdiZon, FPSLocker, Fizeau, ReverseNX-RT, Ryazha-clk, RyazhaTune |
+| Приложения | RyazhaAI, SwitchWave, Ryazhenka AIO Updater |
+| Геймпады и эмуляторы | Mission-Control, PPSSPP |
 
-Архив EdiZon намеренно не используется, поскольку содержит путь `../BUILD_INFO.txt`; вместо него каталог устанавливает проверенный `ovlEdiZon.ovl` напрямую. `RyazhaTune` добавлен как медиаплеер с фоновым sysmodule: его полный ZIP устанавливается в корень SD, после чего требуется перезагрузка Switch. RyazhaTune не является модулем `Ryazha-clk`.
+Нерабочие или лишние старые источники Tesla Menu, Mod Alchemist и FTP-сервера удалены из меню загрузок. Не добавляются прежнее OC-ядро, CPU/GPU/RAM-профили, OC-пресеты, кривые вентиляторов, OC-loader.kip, старый автодетектор RAM и Status Monitor presets.
 
-## Установка самого пакета
+## Установка
 
-Распакуйте содержимое релизного архива в корень SD-карты. Пакет появится по пути `switch/.packages/Ryazhenkabestcfw Tuner/`. Откройте Ryazhahand-Overlay, затем выберите пакет во вкладке Packages.
+Распакуйте release ZIP в корень SD-карты. Затем откройте Ryazhahand-Overlay и выберите `Ryazhenkabestcfw Tuner` во вкладке Packages.
 
 ```text
-switch/.packages/Ryazhenkabestcfw Tuner/
-├── package.ini          # Информация и точки входа в каталог
-├── include/
-│   ├── core.ini          # Базовые компоненты
-│   ├── overlays.ini      # Установка overlay-компонентов
-│   └── apps.ini          # Homebrew-приложения
-├── boot_package.ini      # Нейтральный сценарий без автодействий
-├── exit_package.ini      # Нейтральный сценарий без действий при выходе
-└── LICENSE               # Условия распространения
+switch/.packages/
+├── Ryazhenkabestcfw Tuner/
+│   ├── package.ini
+│   ├── Data/RyazhaClk/package.ini
+│   ├── Data/System/Ultra/payload 8GB.bin
+│   └── Data/Updater/
+└── Memory Kit/
 ```
 
-## Лицензия и авторство
+## References
 
-Пакет распространяется на условиях MIT; см. `LICENSE.txt` в корне репозитория и `LICENSE` в каталоге пакета. Исторически проект вырос из Ultra Tuner, но v11.0.0 не содержит его тюнинговые конфигурации и сценарии.
+[1]: https://github.com/Dimasick-git/Ryazhenkabestcfw-Tuner/releases/tag/v10.6 "Ryazhenkabestcfw Tuner v10.6 — GitHub Release"
+[2]: https://github.com/ppkantorski/Memory-Kit/releases/tag/v1.0.2 "Memory Kit v1.0.2 — GitHub Release"
+[3]: https://github.com/Ultra-NX/Ultra-Tuner/releases/tag/23-R5 "Ultra Tuner 23|R5 — GitHub Release"

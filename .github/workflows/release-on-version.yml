@@ -1,0 +1,55 @@
+name: Publish Ryazhenkabestcfw Tuner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Build and publish one SD archive
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read package version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONFIG='.packages/Ryazhenkabestcfw Tuner/config.ini'
+          VERSION=$(grep -E '^current=' "$CONFIG" | head -n 1 | cut -d= -f2 | tr -d '\r')
+          test -n "$VERSION"
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build SD archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf release-stage Ryazhenkabestcfw_Tuner.zip
+          mkdir -p release-stage/switch
+          cp -a .packages release-stage/switch/.packages
+          (
+            cd release-stage
+            zip -qr ../Ryazhenkabestcfw_Tuner.zip switch
+          )
+          unzip -tq Ryazhenkabestcfw_Tuner.zip
+
+      - name: Publish release archive
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ steps.version.outputs.value }}
+          name: Ryazhenka Tuner v${{ steps.version.outputs.value }}
+          body: |
+            Автоматическая публикация Ryazhenkabestcfw Tuner v${{ steps.version.outputs.value }}.
+
+            В release хранится только один SD-готовый архив `Ryazhenkabestcfw_Tuner.zip`.
+            При обычном коммите текущий архив заменяется. При изменении `current=` в package config создаётся новый тег и release.
+          files: Ryazhenkabestcfw_Tuner.zip
+          fail_on_unmatched_files: true
+          overwrite_files: true
+          generate_release_notes: true
