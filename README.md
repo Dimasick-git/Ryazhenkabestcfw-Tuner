@@ -1,67 +1,52 @@
 # Ryazhenkabestcfw Tuner
 
-**EN:** Ultrahand `.packages/` toolset for Nintendo Switch (Atmosphere CFW). Multitool for overclocking, system settings, homebrew installation. Russian-localized fork of Ultra Tuner (redraz/UltraNX) adapted to the Ryazha ecosystem (Ryazhahand-Overlay, RCU, libryazhahand). Includes ppkantorski Memory Kit v1.0.2. License: MIT.
+## Версия 11.0.0
 
----
+**Ryazhenkabestcfw Tuner v11.0.0** — информационный каталог для Ryazhahand-Overlay и совместимых менеджеров пакетов Nintendo Switch. В нём нет разгона, изменения системных параметров или скрытых автоматических действий.
 
-## Что это
+> **Весь тюнинг перенесён в Ryazha-clk начиная с версии 3.0.0.**
 
-`.packages/`-пакет для Ryazhahand-Overlay (Tesla совместимый), который даёт UI для:
-- Разгона CPU/GPU/RAM (через KIP-патчи + RCU sysmodule).
-- Управления частотами / напряжениями / DRAM.
-- System settings: GPU scheduling, USB 3.0, charge speed, video bitrate.
-- Установка/обновление overlay'ев и хоумбрю.
-- Patch-менеджмент: Memory Kit (1.85MB / stripped / +40MB mesosphere), AOTAG temp sensor, 8GB RAM.
-- Бэкапы OC-настроек.
+Пакет не содержит настроек CPU, GPU или RAM, профилей частот и напряжений, пресетов, Memory Kit, OC-патчей или детекторов. Тюнинговый модуль и его детектор развиваются отдельно в `Ryazha-clk`. Тюнер не содержит и не устанавливает OC-функции.
 
-## Состав
+## Каталог Ryazha
 
+Вкладка **«Каталог»** содержит проверенные установочные пункты из официальных GitHub Releases. Для каждой позиции выбран ровно один asset: ZIP с корректной структурой SD, прямой `.ovl` или прямой `.nro`.
+
+| Раздел | Компоненты |
+|---|---|
+| Базовые компоненты | Ryazhahand Overlay, Mission-Control, Ryazhenka AIO Updater |
+| Overlays | ovlSysmodules, Ryazha Status Monitor, EdiZon, ReverseNX-RT, Fizeau, FPSLocker |
+| Приложения | RyazhaAI, RyazhaTune, SwitchWave, PPSSPP |
+
+Каждая установка использует постоянный URL вида `releases/latest/download/<asset>`. После публикации нового release тюнер автоматически скачает актуальный пакет, если workflow проекта сохраняет постоянное имя основного asset. Установочные пункты требуют удержания **A**. После установки sysmodule или полного overlay-пакета перезагрузите Switch.
+
+## Как работает установка
+
+| Формат | Обработка в пакете |
+|---|---|
+| Корневой ZIP | Скачивается во временную папку, распаковывается в корень SD, затем удаляется. |
+| ZIP с внешней папкой | Распаковывается во временную папку; в корень SD копируются только `switch/` и `config/`. |
+| `.ovl` | Скачивается напрямую в `/switch/.overlays/`. |
+| `.nro` | Скачивается напрямую в нужную папку `/switch/`. |
+
+Архив EdiZon намеренно не используется, поскольку содержит путь `../BUILD_INFO.txt`; вместо него каталог устанавливает проверенный `ovlEdiZon.ovl` напрямую. `RyazhaTune` добавлен как медиаплеер с фоновым sysmodule: его полный ZIP устанавливается в корень SD, после чего требуется перезагрузка Switch. RyazhaTune не является модулем `Ryazha-clk`.
+
+## Установка самого пакета
+
+Распакуйте содержимое релизного архива в корень SD-карты. Пакет появится по пути `switch/.packages/Ryazhenkabestcfw Tuner/`. Откройте Ryazhahand-Overlay, затем выберите пакет во вкладке Packages.
+
+```text
+switch/.packages/Ryazhenkabestcfw Tuner/
+├── package.ini          # Информация и точки входа в каталог
+├── include/
+│   ├── core.ini          # Базовые компоненты
+│   ├── overlays.ini      # Установка overlay-компонентов
+│   └── apps.ini          # Homebrew-приложения
+├── boot_package.ini      # Нейтральный сценарий без автодействий
+├── exit_package.ini      # Нейтральный сценарий без действий при выходе
+└── LICENSE               # Условия распространения
 ```
-.packages/Ryazhenkabestcfw Tuner/
-├── package.ini              -- главное меню (Ряженка / Другое)
-├── boot_package.ini         -- автоматические патчи при загрузке
-├── exit_package.ini         -- очистка при выходе
-├── config.ini               -- runtime config (создаётся пакетом)
-├── LICENSE
-└── Data/
-    ├── AtmosPatches/        -- старая система Atmosphere-патчей
-    ├── Fans/                -- кривые охлаждения
-    ├── MemoryKit/           -- ppkantorski Memory Kit v1.0.2
-    ├── Presets/             -- пресеты CPU/GPU/RAM/DRAM
-    ├── Tuner/               -- основные tuner-меню
-    └── Updater/             -- Downloads.ini, Software.ini, RyazhaModules.ini
-```
 
-## Установка
+## Лицензия и авторство
 
-1. Скачать `.zip` релиз → распаковать в корень SD-карты.
-2. Pаспаковка положит `.packages/Ryazhenkabestcfw Tuner/` в `switch/.packages/` (Ultrahand convention).
-3. Открыть Ryazhahand-Overlay (Tesla hotkey) → пакет «Ряженка» появится в списке.
-
-**Требования:**
-- Atmosphere CFW (актуальная).
-- [Ryazhahand-Overlay](https://github.com/Dimasick-git/Ryazhahand-Overlay) или совместимый Ultrahand-форк.
-- [nx-ovlloader](https://github.com/Dimasick-git/nx-ovlloader).
-- KIP: рекомендуется RCU (`Dimasick-git/RCU`) для актуального loader.kip.
-
-## Цветовые сигналы
-
-Пакет использует встроенную систему `info_text_color` из libryazhahand:
-- 🟢 `healthy_ram` (#00FF00) — безопасные операции (download official релизов).
-- 🟡 `neutral_ram` (#FFAA00) — внимание (Memory Kit, изменение mesosphere).
-- 🔴 `warning_text` (#FF7777) — опасные (8GB RAM, +40MB патч, exosphere swap).
-
-## Memory Kit интеграция
-
-Под пунктом «Memory Kit» (Mariko-only) запускается ppkantorski Memory Kit v1.0.2 — выбор mesosphere варианта (1.85MB / stripped / +40MB) с поддержкой AMS 1.9 / 1.10 / 1.11.
-
-## Версии
-
-- **v11.0** (актуальная) — миграция на Dimasick-git аккаунт, Memory Kit v1.0.2, цветовые warnings, новые overlay URLs.
-- v10.6 — последняя версия до миграции аккаунта.
-
-## Лицензия
-
-MIT. См. `.packages/Ryazhenkabestcfw Tuner/LICENSE`. Историческое происхождение — Ultra Tuner (redraz/UltraNX) → Ryazhenkabestcfw Tuner (Dimasick-git).
-
-Atrtibutions: redraz (Ultra Tuner upstream), ppkantorski (Memory Kit + Ultrahand framework), Soul & Lightos, Dimasick-git.
+Пакет распространяется на условиях MIT; см. `LICENSE.txt` в корне репозитория и `LICENSE` в каталоге пакета. Исторически проект вырос из Ultra Tuner, но v11.0.0 не содержит его тюнинговые конфигурации и сценарии.
