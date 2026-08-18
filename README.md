@@ -44,12 +44,13 @@
 
 ```text
 switch/.packages/
-├── Ryazhenkabestcfw Tuner/
-│   ├── package.ini
-│   ├── Data/RyazhaClk/package.ini
-│   ├── Data/System/Ultra/payload 8GB.bin
-│   └── Data/Updater/
-└── Memory Kit/
+└── Ryazhenkabestcfw Tuner/
+    ├── package.ini
+    └── Data/
+        ├── Memory Kit/
+        ├── RyazhaClk/
+        ├── System/Ultra/payload 8GB.bin
+        └── Updater/
 ```
 
 ## References
