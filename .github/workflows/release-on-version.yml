@@ -26,6 +26,11 @@ jobs:
           test -n "$VERSION"
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Check kernel compatibility
+        run: |
+          python3 -m pip install unicorn==2.1.4
+          python3 tools/update_memory_kernels.py --verify
+
       - name: Build SD archive
         shell: bash
         run: |
@@ -45,11 +50,12 @@ jobs:
           tag_name: v${{ steps.version.outputs.value }}
           name: Ryazhenka Tuner v${{ steps.version.outputs.value }}
           body: |
-            Автоматическая публикация Ryazhenkabestcfw Tuner v${{ steps.version.outputs.value }}.
+            • Отдельная вкладка «Моды»: только Zelda, настройки на русском и сохранение TotK.
+            • Патчи памяти для Atmosphere 1.12 / HOS 23 с совместимостью старых homebrew, обновлён 8GB payload.
+            • Исправлены загрузки модулей; ресурсы и моды берутся из репозитория Ряженки.
 
-            В release хранится только один SD-готовый архив `Ryazhenkabestcfw_Tuner.zip`.
-            При обычном коммите текущий архив заменяется. При изменении `current=` в package config создаётся новый тег и release.
+            Распакуйте архив в корень SD. Патч +40 МБ отключает веб-браузер.
           files: Ryazhenkabestcfw_Tuner.zip
           fail_on_unmatched_files: true
           overwrite_files: true
-          generate_release_notes: true
+          generate_release_notes: false
